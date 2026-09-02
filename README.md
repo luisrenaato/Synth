@@ -1,2 +1,2 @@
 # Synth
-Leitor de mão
+Identificador de mãos que produz som
