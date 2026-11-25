@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teste da câmera</title>
+<style>
+body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:32px auto;padding:0 16px}
+video{width:100%;background:#000;border-radius:12px;margin-top:12px}
+button{font:inherit;padding:10px 18px;border-radius:10px;border:0;background:#2f5bff;color:#fff;cursor:pointer}
+pre{background:#f1f2f5;padding:12px;border-radius:10px;white-space:pre-wrap}
+</style></head><body>
+<h1>Teste da câmera</h1>
+<button id="b">Testar câmera</button>
+<pre id="log">Clique em "Testar câmera".</pre>
+<video id="v" autoplay playsinline muted></video>
+<script>
+const log=t=>document.getElementById("log").textContent=t;
+document.getElementById("b").onclick=async()=>{
+  let out=`Endereço: ${location.href}\nSeguro (https/localhost): ${isSecureContext}\n`;
+  if(!navigator.mediaDevices){log(out+"\nnavigator.mediaDevices não existe. Abra por http://localhost ou https.");return}
+  try{
+    const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput");
+    out+=`Câmeras encontradas: ${devs.length}\n`;
+    const s=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+    document.getElementById("v").srcObject=s;
+    const t=s.getVideoTracks()[0].getSettings();
+    log(out+`\nFUNCIONOU. Resolução: ${t.width}x${t.height}`);
+  }catch(e){log(out+`\nERRO: ${e.name}\n${e.message}\n\nNotAllowedError = permissão negada (cadeado na barra de endereço, ou permissão do Windows/macOS para o navegador).\nNotReadableError = outro programa está usando a câmera (Zoom, Teams, OBS...).\nNotFoundError = nenhuma câmera detectada.`)}
+};
+</script></body></html>

@@ -1,407 +1,632 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AirSynth / Terminal-86</title>
-  <style>
-    :root{--case:#c8c0aa;--case-light:#e7dfc8;--case-dark:#817a68;--screen:#07170e;--green:#74ff91;--ink:#172019}
-    *{box-sizing:border-box} body{margin:0;min-height:100vh;background:#11100e;color:var(--ink);font:14px "Courier New",monospace;letter-spacing:.04em;background-image:radial-gradient(#403d34 1px,transparent 1px);background-size:5px 5px}
-    .machine{width:min(1120px,calc(100% - 28px));margin:36px auto;padding:18px;border:4px solid var(--case-dark);border-radius:12px;background:linear-gradient(135deg,var(--case-light),var(--case));box-shadow:0 18px 0 #4d493e,0 28px 55px #000}
-    header{display:flex;justify-content:space-between;align-items:center;padding:0 4px 14px;border-bottom:2px solid #9b937e}.brand{font-weight:bold;font-size:clamp(18px,3vw,28px);letter-spacing:.12em}.model{font-size:11px;color:#595447}.lamp{display:inline-block;width:10px;height:10px;margin-right:8px;border-radius:50%;background:#514d43}.lamp.on{background:#ff4d39;box-shadow:0 0 8px #ff4d39}
-    .grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(270px,.75fr);gap:18px;margin-top:18px}.bezel{background:#615c4e;border:8px solid #aaa18c;border-radius:7px;padding:10px}.crt{position:relative;min-height:500px;overflow:hidden;background:var(--screen);border-radius:8px;border:4px solid #252c25;box-shadow:inset 0 0 55px #000;color:var(--green)}.crt:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18),rgba(0,0,0,.18) 1px,transparent 2px,transparent 4px)}
-    video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}video{opacity:.22;filter:sepia(1) hue-rotate(75deg) saturate(.75) contrast(1.25)}#hands{z-index:2}.hud{position:relative;z-index:3;padding:13px;font-size:11px;line-height:1.7;text-shadow:0 0 7px var(--green)}.hud-top{display:flex;justify-content:space-between}.note{position:absolute;z-index:3;left:50%;top:46%;transform:translate(-50%,-50%);text-align:center;text-shadow:0 0 15px var(--green)}.note b{font-size:clamp(70px,13vw,132px);line-height:.8}.note small{display:block;margin-top:16px}.start{position:absolute;z-index:5;bottom:20px;left:50%;transform:translateX(-50%)}
-    button,select{font:inherit;letter-spacing:.04em;border:2px solid #605b4d;border-radius:3px;background:linear-gradient(#f1ead7,#bcb39c);color:#1d211b;padding:10px;cursor:pointer;box-shadow:0 3px 0 #716a58}button:disabled{opacity:.6;cursor:wait}.start button{color:#dfffe4;background:#1d5730;border-color:#78c481;font-weight:bold}.panel{padding:15px;border:3px solid #918873;background:rgba(236,228,207,.7);box-shadow:inset 0 0 0 2px #f5efdd}.panel+.panel{margin-top:14px}.panel h2{font-size:13px;margin:0 0 12px;border-bottom:1px dashed #847c69;padding-bottom:8px}.panel label{display:block;font-size:11px;margin:9px 0 5px}select{width:100%}.meter{height:12px;border:2px solid #585445;background:#203323;padding:1px}.meter i{display:block;height:100%;width:0;background:var(--green);box-shadow:0 0 8px var(--green);transition:width .08s}.value{float:right;color:#48684c}.gestures p{margin:7px 0;padding:7px;border-left:5px solid #8b8370;background:#ddd4bd;font-size:11px}.gestures p.active{border-color:#2f9e4c;background:#c5dfc6}.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.wave{height:80px;background:var(--screen);border:3px solid #565042}.wave canvas{position:relative;transform:none;width:100%;height:100%}.footer{text-align:center;margin:16px 0 0;font-size:10px;color:#554f43}
-    @media(max-width:800px){.grid{grid-template-columns:1fr}.crt{min-height:440px}.machine{margin:14px auto}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Libras ao vivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --card:#ffffff; --ink:#14161c; --mute:#6a717f; --line:#e6e8ed; --bg:#f7f8fa;
+    --accent:#2f5bff; --accent-soft:#e8edff; --ok:#13a05a;
+    --display:"Outfit",system-ui,sans-serif; --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --glass:rgba(12,14,19,.5);
+  }
+  @media(prefers-color-scheme:dark){
+    :root{--card:#171a21;--ink:#f1f3f7;--mute:#98a0ae;--line:#272b35;--bg:#0e1015;--accent:#7c9bff;--accent-soft:#1f2740;--ok:#4cd98c}
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:#0b0d11;color:#fff;font:15px/1.5 var(--body);overflow:hidden}
+  button{font:inherit;color:inherit;cursor:pointer}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+  .mirror{position:fixed;inset:0;transform:scaleX(-1)}
+  .mirror video,.mirror canvas{position:absolute;inset:0;width:100%;height:100%}
+  .mirror video{object-fit:cover}
+
+  .hud{position:fixed;top:max(16px,env(safe-area-inset-top));left:16px;display:flex;align-items:center;gap:12px;
+       padding:6px 18px 6px 14px;border-radius:18px;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+       transition:background .2s}
+  .hud.ok{background:rgba(19,160,90,.75)}
+  .hud b{font:700 52px/1 var(--display);min-width:.7em;text-align:center}
+  .hud span{font-size:13px;line-height:1.3;color:rgba(255,255,255,.75)}
+  .hud span strong{display:block;color:#fff;font-size:15px;font-weight:600}
+  .tools{position:fixed;top:max(16px,env(safe-area-inset-top));right:16px;display:flex;gap:8px}
+  .icon{width:44px;height:44px;border-radius:50%;border:0;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:grid;place-items:center}
+  .icon svg{width:21px;height:21px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .icon .off{display:none}
+  .icon[aria-pressed="false"] .on{display:none}
+  .icon[aria-pressed="false"] .off{display:block}
+  .toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%);padding:9px 18px;border-radius:99px;background:var(--glass);backdrop-filter:blur(10px);font-size:14px;max-width:calc(100% - 32px);text-align:center}
+  .toast[hidden]{display:none}
+  .trainpill{position:fixed;top:max(16px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:8px 18px;border-radius:99px;background:var(--glass);backdrop-filter:blur(10px);font-size:14px;white-space:nowrap;text-align:center}
+  .trainpill[hidden]{display:none}
+  .trainpill b{font:700 22px var(--display);margin:0 6px}
+  @media(max-width:700px){.trainpill{top:88px}}
+
+  .start{position:fixed;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:24px;background:#0b0d11}
+  .start[hidden]{display:none}
+  .start h1{font:700 34px/1.1 var(--display);margin:0}
+  .start p{margin:0;color:rgba(255,255,255,.65);max-width:34ch}
+  .primary{background:#2f5bff;color:#fff;border:0;border-radius:12px;padding:13px 26px;font-weight:600;font-size:16px}
+  .primary:disabled{opacity:.6;cursor:wait}
+  #startMsg{color:#ffb4a8;font-size:14px;max-width:40ch;min-height:20px}
+
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,100%);background:var(--bg);color:var(--ink);padding:16px;overflow:auto;
+          transform:translateX(100%);transition:transform .25s;z-index:10}
+  .drawer.open{transform:none;box-shadow:-12px 0 40px rgba(0,0,0,.35)}
+  .drawer header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .drawer h2{font:700 17px var(--display);margin:0}
+  .close{background:none;border:0;font-size:26px;line-height:1;color:var(--mute);padding:4px 10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .card+.card{margin-top:12px}
+  .card h3{font:700 14px var(--display);margin:0 0 12px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .ghost{background:var(--accent-soft);color:var(--accent);border:0;border-radius:10px;padding:9px 14px;font-weight:600;font-size:14px}
+  .ghost.off{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(9,1fr);gap:5px}
+  .grid button{aspect-ratio:1;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:700 15px var(--display);position:relative;padding:0}
+  .grid button.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .grid button.live{background:var(--ok);border-color:var(--ok);color:#fff}
+  .grid button.cal:after{content:"";position:absolute;right:3px;top:3px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+  .grid button.mv:before{content:"";position:absolute;left:50%;bottom:3px;width:10px;height:2px;margin-left:-5px;border-radius:2px;background:currentColor;opacity:.45}
+  .legend{margin:10px 0 0;color:var(--mute);font-size:12px}
+  .detail{display:flex;gap:14px;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+  .detail b{font:700 48px/1 var(--display);min-width:44px;text-align:center}
+  .detail p{margin:0;font-size:14px}
+  .detail em{display:block;font-style:normal;color:var(--mute);font-size:12px;margin-top:4px}
+  details summary{cursor:pointer;font:700 14px var(--display);list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary:after{content:"+";float:right;color:var(--mute)}
+  details[open] summary:after{content:"–"}
+  details p{color:var(--mute);font-size:13px;margin:10px 0}
+  .acts{display:flex;flex-wrap:wrap;gap:8px}
+  #calMsg{min-height:20px;font-size:13px;color:var(--accent);margin-top:10px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
 </head>
 <body>
-  <main class="machine">
-    <header>
-      <div><span class="brand">AIR/SYNTH</span> <span class="model">GESTURE MUSIC COMPUTER</span></div>
-      <div><span id="lamp" class="lamp"></span><span id="status">OFFLINE</span></div>
-    </header>
 
-    <section class="grid">
+<div class="mirror">
+  <video id="cam" autoplay playsinline muted></video>
+  <canvas id="ov"></canvas>
+</div>
+
+<div class="hud" id="hud" aria-live="polite">
+  <b id="letter">·</b>
+  <span id="letterInfo"><strong>Mostre a mão</strong>para a câmera</span>
+</div>
+
+<div class="trainpill" id="trainPill" hidden>Faça a letra <b id="target">A</b><small id="score"></small><br><small id="targetHint"></small></div>
+
+<div class="tools">
+  <button class="icon" id="voiceBtn" aria-pressed="true" aria-label="Voz ligada ou desligada" title="Voz">
+    <svg class="on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg>
+    <svg class="off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+  </button>
+  <button class="icon" id="menuBtn" aria-label="Abrir menu" title="Alfabeto e treino">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<div class="start" id="startWrap">
+  <h1>Libras ao vivo</h1>
+  <p>Faça uma letra do alfabeto manual e ouça o nome dela.</p>
+  <button class="primary" id="start">Ligar a câmera</button>
+  <div id="startMsg"></div>
+</div>
+
+<aside class="drawer" id="drawer" aria-label="Menu">
+  <header><h2>Alfabeto e treino</h2><button class="close" id="closeBtn" aria-label="Fechar">×</button></header>
+
+  <div class="card">
+    <div class="row">
+      <span>Modo treino</span>
+      <button class="ghost off" id="train">Começar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Alfabeto</h3>
+    <div class="grid" id="grid"></div>
+    <p class="legend">Traço embaixo da letra: ela usa movimento.</p>
+    <div class="detail">
+      <b id="dL">A</b>
       <div>
-        <div class="bezel">
-          <div class="crt">
-            <video id="camera" autoplay playsinline muted></video>
-            <canvas id="hands"></canvas>
-
-            <div class="hud">
-              <div class="hud-top">
-                <span>CAMERA: <span id="cameraState">STANDBY</span></span>
-                <span id="handCount">HANDS: 0</span>
-              </div>
-              <div>OS: AIRSYNTH-86 / AUDIO ENGINE READY</div>
-            </div>
-
-            <div class="note">
-              <b id="note"></b>
-              <small id="noteInfo">APRESENTE A MÃO À CÂMERA</small>
-            </div>
-
-            <div class="start">
-              <button id="start">[ INICIAR SISTEMA ]</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel" style="margin-top:14px">
-          <h2>OSCILOSCÓPIO <span class="value" id="frequency">0 HZ</span></h2>
-          <div class="wave"><canvas id="wave"></canvas></div>
-        </div>
+        <p id="dT"></p>
+        <em id="dM"></em>
+        <button class="ghost" id="dPlay" style="margin-top:8px">Ouvir</button>
       </div>
+    </div>
+  </div>
 
-      <aside>
-        <div class="panel">
-          <h2>MÓDULO DE SOM</h2>
-          <label for="waveType">PROCESSADOR / FORMA DE ONDA</label>
-          <select id="waveType">
-            <option value="sine">SENO — SUAVE</option>
-            <option value="triangle">TRIÂNGULO — MACIO</option>
-            <option value="sawtooth">SERRA — BRILHANTE</option>
-            <option value="square">QUADRADA — RETRÔ</option>
-          </select>
-        </div>
+  <div class="card">
+    <details>
+      <summary>Ensinar ao sistema</summary>
+      <p>Se uma letra não for reconhecida, escolha ela no alfabeto, faça o sinal e grave. Fica salvo neste navegador. Letras com movimento usam a posição de uma letra base (ex.: J usa o I): grave a base.</p>
+      <div class="acts">
+        <button class="primary" id="rec" style="font-size:14px;padding:10px 16px">Gravar a letra <span id="recL">A</span></button>
+        <button class="ghost off" id="clearOne">Apagar essa</button>
+        <button class="ghost off" id="clearAll">Apagar tudo</button>
+      </div>
+      <div id="calMsg"></div>
+    </details>
+  </div>
+</aside>
 
-        <div class="panel">
-          <h2>TELEMETRIA</h2>
-          <label>ALTURA <span id="pitchValue" class="value">0%</span></label>
-          <div class="meter"><i id="pitchBar"></i></div>
-          <label>VOLUME <span id="volumeValue" class="value">0%</span></label>
-          <div class="meter"><i id="volumeBar"></i></div>
-          <label>PANORAMA <span id="panValue" class="value">CENTRO</span></label>
-          <div class="meter"><i id="panBar"></i></div>
-        </div>
+<script type="module">
+const $ = id => document.getElementById(id);
+const video = $("cam"), cv = $("ov"), ctx = cv.getContext("2d");
 
-        <div class="panel gestures">
-          <h2>LEITOR DE GESTOS <span id="gesture" class="value">AGUARDANDO</span></h2>
-          <p id="open">MÃO ABERTA: FREQUÊNCIA BAIXA</p>
-          <p id="pinch">PINÇA: TOCAR NOTA</p>
-          <p id="closed">MÃO FECHADA: SILENCIAR</p>
-        </div>
+const LETTERS = "ABCÇDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-        <div class="panel">
-          <h2>TECLAS DE FUNÇÃO</h2>
-          <div class="controls">
-            <button id="down">− OITAVA</button>
-            <button id="up">+ OITAVA</button>
-            <button id="reset">RESET</button>
-            <button id="mute">MUTE</button>
-          </div>
-        </div>
-      </aside>
-    </section>
+// Letras do manual que dependem de movimento, e a posição de mão em que cada uma começa.
+const MOVE = new Set(["Ç", "H", "J", "K", "Z"]);
+const BASE = { "Ç": "C", H: "V", J: "I", K: "V", Z: "D" };
 
-    <p class="footer">AIR/SYNTH TERMINAL-86 · COMPUTER VISION × WEB AUDIO · JAVASCRIPT</p>
-  </main>
+const SAY = {A:"á",B:"bê",C:"cê","Ç":"cê cedilha",D:"dê",E:"é",F:"éfe",G:"gê",H:"agá",I:"i",J:"jota",K:"cá",L:"éle",M:"ême",N:"êne",O:"ó",P:"pê",Q:"quê",R:"érre",S:"ésse",T:"tê",U:"u",V:"vê",W:"dáblio",X:"xis",Y:"ípsilon",Z:"zê"};
 
-  <script type="module">
-    const $ = id => document.getElementById(id);
+// Descrições seguindo o manual de alfabeto de Libras
+const INFO = {
+  A:"Punho fechado, com o polegar esticado para cima.",
+  B:"Mão aberta, dedos juntos para cima e polegar dobrado sobre a palma.",
+  C:"Mão curvada em forma de C.",
+  "Ç":"Mão em C, balançando levemente.",
+  D:"Indicador para cima; os outros dedos fechados e o polegar encostado neles.",
+  E:"Punho fechado, com o polegar dobrado por baixo dos dedos.",
+  F:"Polegar e indicador formam um círculo; os outros dedos esticados para cima.",
+  G:"Indicador para cima, com os outros dedos e o polegar fechados ao lado.",
+  H:"Indicador e médio esticados, girando.",
+  I:"Punho fechado com o mindinho para cima.",
+  J:"Mindinho para cima, desenhando um J no ar.",
+  K:"Indicador e médio esticados e separados, subindo.",
+  L:"Indicador para cima e polegar para o lado, formando um L.",
+  M:"Mão virada para baixo, com três dedos esticados (indicador, médio e anelar).",
+  N:"Mão virada para baixo, com dois dedos esticados (indicador e médio).",
+  O:"Dedos curvados tocando o polegar, formando um O.",
+  P:"Mão de lado, com indicador e médio esticados apontando para o lado.",
+  Q:"Mão virada para baixo, com o indicador apontando para baixo.",
+  R:"Indicador e médio cruzados, para cima.",
+  S:"Punho fechado, com o polegar cruzado na frente dos dedos.",
+  T:"Dedos esticados juntos para cima, com o polegar dobrado na frente.",
+  U:"Indicador e médio esticados e juntos, para cima.",
+  V:"Indicador e médio esticados e separados, em V.",
+  W:"Indicador, médio e anelar esticados e separados.",
+  X:"Mão de lado, com o indicador dobrado em gancho e os outros dedos fechados.",
+  Y:"Polegar e mindinho esticados, com os outros dedos fechados.",
+  Z:"Indicador para cima, desenhando um Z no ar."
+};
 
-    const video = $("camera");
-    const canvas = $("hands");
-    const ctx = canvas.getContext("2d");
-    const wave = $("wave");
-    const waveCtx = wave.getContext("2d");
+const LINKS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],
+               [0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
 
-    let tracker;
-    let audio;
-    let oscillator;
-    let gain;
-    let panner;
-    let analyser;
-    let running = false;
-    let muted = false;
-    let octave = 0;
-    let detectorBusy = false;
-    let detectedHands = [];
+let tracker, running = false, busy = false;
+let sel = "A", shown = null, cand = null, count = 0;
+let samples = {};
+let recLeft = 0, recLetter = null, lastVec = null;
+let target = null, score = 0, locked = false;
+let voice = null, voiceOn = true;
+let buf = [], lockUntil = 0, blockedPose = null;
 
-    let target = { freq: 440, vol: 0, pan: 0 };
-    let current = { freq: 440, vol: 0, pan: 0 };
+const KEY = "libras-samples-v2";
+try { samples = JSON.parse(localStorage.getItem(KEY)) || {}; } catch { samples = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(samples)); } catch {} };
 
-    const noteNames = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+function toast(text) { const t = $("toast"); t.hidden = !text; t.textContent = text || ""; }
 
-    const clamp = (value, min = 0, max = 1) =>
-      Math.max(min, Math.min(max, value));
+/* ---------- Voz ---------- */
+function pickVoice() {
+  const list = speechSynthesis.getVoices();
+  voice = list.find(v => v.lang === "pt-BR") || list.find(v => v.lang.startsWith("pt")) || null;
+}
+if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 
-    const distance = (a, b) =>
-      Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+function say(text) {
+  if (!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "pt-BR"; u.rate = 0.95;
+  if (voice) u.voice = voice;
+  speechSynthesis.speak(u);
+}
 
-    function resize() {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
-      wave.width = wave.clientWidth;
-      wave.height = wave.clientHeight;
+$("voiceBtn").onclick = () => {
+  voiceOn = !voiceOn;
+  $("voiceBtn").setAttribute("aria-pressed", voiceOn);
+  if (!voiceOn && "speechSynthesis" in window) speechSynthesis.cancel();
+};
+
+/* ---------- Câmera ---------- */
+async function getCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    const e = new Error("insecure"); e.name = "Insecure"; throw e;
+  }
+  try {
+    return await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+  } catch (e) {
+    if (e.name === "NotAllowedError" || e.name === "SecurityError") throw e;
+    return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+  }
+}
+
+const CAM_ERRORS = {
+  NotAllowedError: "A câmera foi bloqueada. Clique no cadeado ao lado do endereço, permita a câmera e tente de novo.",
+  SecurityError: "O navegador bloqueou a câmera. Abra o site por https ou localhost.",
+  Insecure: "Este endereço não pode usar a câmera. Abra o site por https ou localhost (não direto do arquivo).",
+  NotFoundError: "Nenhuma câmera encontrada neste dispositivo.",
+  NotReadableError: "A câmera está sendo usada por outro programa. Feche ele e tente de novo."
+};
+
+function fitCanvas() { cv.width = cv.clientWidth; cv.height = cv.clientHeight; }
+addEventListener("resize", fitCanvas);
+
+async function start() {
+  $("start").disabled = true; $("startMsg").textContent = "";
+  try {
+    const stream = await getCamera();
+    video.srcObject = stream;
+    await video.play();
+    fitCanvas();
+    $("startWrap").hidden = true;
+  } catch (e) {
+    console.error(e);
+    $("startMsg").textContent = CAM_ERRORS[e.name] || `Não foi possível abrir a câmera (${e.name || "erro"}).`;
+    $("start").disabled = false; $("start").textContent = "Tentar de novo";
+    return;
+  }
+  try {
+    toast("Carregando leitor de mãos…");
+    await loadTracker();
+    running = true; toast("");
+    loop();
+  } catch (e) {
+    console.error(e);
+    toast("A câmera abriu, mas o leitor de mãos não carregou. Verifique a internet e recarregue.");
+  }
+}
+
+async function loadTracker() {
+  await new Promise((ok, fail) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js";
+    s.onload = ok; s.onerror = () => fail(new Error("cdn"));
+    document.head.appendChild(s);
+  });
+  tracker = new window.Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+  tracker.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
+  tracker.onResults(onResults);
+}
+
+async function loop() {
+  if (!running) return;
+  if (video.readyState >= 2 && !busy) {
+    busy = true;
+    try { await tracker.send({ image: video }); } catch (e) { console.error(e); }
+    busy = false;
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- Posição da mão (letras sem movimento) ---------- */
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+
+function toVector(h, flip) {
+  const w = h[0], s = dist(h[0], h[9]) || 1, v = [];
+  for (const p of h) v.push(((p.x - w.x) / s) * (flip ? -1 : 1), (p.y - w.y) / s, ((p.z - w.z) / s) * 0.5);
+  return v;
+}
+
+// Regras baseadas no manual. Cada dedo vira: esticado, curvado pela metade ou fechado.
+function byRules(h) {
+  const s = dist(h[0], h[9]) || 1;
+  const d = (a, b) => dist(h[a], h[b]) / s;
+  const ratio = [[8,5],[12,9],[16,13],[20,17]].map(([t, m]) => d(t, 0) / d(m, 0));
+  const ext = ratio.map(x => x > 1.5);
+  const curl = ratio.map(x => x < 1.2);
+  const half = ratio.map(x => x >= 1.2 && x <= 1.5);
+  const [i, m, r, p] = ext;
+  const n = ext.filter(Boolean).length;
+  const thumbOut = d(4, 5) > 0.75;
+  const pinch = d(4, 8) < 0.35;
+
+  // Para onde a mão aponta (pulso -> base do dedo médio)
+  const vx = h[9].x - h[0].x, vy = h[9].y - h[0].y;
+  const down = vy > 0 && Math.abs(vy) > Math.abs(vx);
+  const side = Math.abs(vx) > Math.abs(vy);
+
+  if (down) {                                  // M, N, Q: mão virada para baixo
+    if (i && m && r && !p) return "M";
+    if (i && m && !r && !p) return "N";
+    if (i && !m && !r && !p) return "Q";
+    return null;
+  }
+  if (half[0] && curl[1] && curl[2] && curl[3]) return "X";          // indicador em gancho
+  if (side) return i && m && !r && !p ? "P" : null;                   // P: dois dedos para o lado
+
+  if (pinch && m && r && p) return "F";
+  if (pinch && !m && !r && !p) return "O";
+  if (half.every(Boolean) && d(4, 8) > 0.45 && d(4, 8) < 1.1) return "C";
+  if (n === 4) return thumbOut ? null : "B";
+  if (i && !m && !r && !p) return thumbOut ? "L" : d(4, 12) < 0.5 ? "D" : "G";
+  if (p && !i && !m && !r) return thumbOut ? "Y" : "I";
+  if (i && m && !r && !p) {
+    if (d(8, 12) < 0.3) return (h[8].x - h[12].x) * (h[5].x - h[9].x) < 0 ? "R" : "U";
+    return "V";
+  }
+  if (i && m && r && !p) return d(8, 12) > 0.3 ? "W" : "T";
+  if (curl.every(Boolean)) {                   // punho fechado: A, S ou E
+    if (thumbOut) return "A";
+    return d(4, 10) < 0.5 && d(4, 0) > 0.85 ? "S" : "E";
+  }
+  return null;
+}
+
+function byLearned(vec) {
+  const near = [];
+  for (const L in samples) for (const s of samples[L]) {
+    let sum = 0;
+    for (let k = 0; k < vec.length; k++) { const x = vec[k] - s[k]; sum += x * x; }
+    near.push([Math.sqrt(sum), L]);
+  }
+  if (!near.length) return null;
+  near.sort((a, b) => a[0] - b[0]);
+  const top = near.slice(0, 5);
+  if (top[0][0] > 1.3) return null;
+  const votes = {};
+  for (const [dd, L] of top) votes[L] = (votes[L] || 0) + 1 / (dd + 0.05);
+  return Object.entries(votes).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function classify(h, vec) {
+  const learned = byLearned(vec);
+  if (learned) return learned;
+  const rule = byRules(h);
+  return rule && !(samples[rule] && samples[rule].length) ? rule : null;
+}
+
+/* ---------- Letras com movimento: Ç, H, J, K, Z ---------- */
+/*MOTION-START*/
+const MOTION_BASES = new Set(["I", "V", "U", "C", "D", "G"]);
+
+function pathLen(win, k) {
+  let s = 0;
+  for (let i = 1; i < win.length; i++) s += Math.hypot(win[i][k][0] - win[i-1][k][0], win[i][k][1] - win[i-1][k][1]);
+  return s;
+}
+function netMove(win, k) {
+  const a = win[0][k], b = win[win.length - 1][k];
+  return [b[0] - a[0], b[1] - a[1]];
+}
+// Quanto a mão se mexeu nos últimos instantes (em tamanhos de mão)
+function motionEnergy(buf, now) {
+  const win = buf.filter(e => now - e.t < 450);
+  if (win.length < 4) return 0;
+  return Math.max(pathLen(win, "mid"), pathLen(win, "p20"), pathLen(win, "w"));
+}
+// O dedo passou por: canto sup. esquerdo, sup. direito, inf. esquerdo, inf. direito (um Z)
+function zShape(pts) {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const [x, y] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 - x0 < 0.7 || y1 - y0 < 0.7) return false;
+  const goals = [p => p[0] < .3 && p[1] < .3, p => p[0] > .7 && p[1] < .3, p => p[0] < .3 && p[1] > .7, p => p[0] > .7 && p[1] > .7];
+  let g = 0;
+  for (const [x, y] of pts) {
+    if (goals[g]([(x - x0) / (x1 - x0), (y - y0) / (y1 - y0)])) g++;
+    if (g === 4) return true;
+  }
+  return false;
+}
+function motionLetter(buf, now) {
+  const win = buf.filter(e => now - e.t < 1400);
+  if (win.length < 10) return null;
+  const cnt = {};
+  for (const e of win) if (e.pose) cnt[e.pose] = (cnt[e.pose] || 0) + 1;
+  const total = Object.values(cnt).reduce((a, b) => a + b, 0);
+  if (total < 8) return null;
+  const share = (...ls) => ls.reduce((a, l) => a + (cnt[l] || 0), 0) / total;
+
+  if (share("I") > 0.6 && pathLen(win, "p20") > 1.3) return "J";
+
+  if (share("V", "U") > 0.6) {
+    const n = netMove(win, "mid");
+    if (n[1] < -0.8 && pathLen(win, "mid") > 0.9) return "K";
+    const a0 = win[0].ang;
+    let lo = 0, hi = 0;
+    for (const e of win) {
+      let da = e.ang - a0; da = Math.atan2(Math.sin(da), Math.cos(da));
+      lo = Math.min(lo, da); hi = Math.max(hi, da);
     }
+    if (hi - lo > 0.6 && Math.abs(n[1]) < 0.6) return "H";
+  }
 
-    addEventListener("resize", resize);
-    resize();
+  if (share("C") > 0.6 && pathLen(win, "w") > 0.9 && Math.hypot(...netMove(win, "w")) < 0.5 * pathLen(win, "w")) return "Ç";
 
-    async function makeTracker() {
-      $("status").textContent = "CARREGANDO LEITOR DE GESTOS";
+  const zw = buf.filter(e => now - e.t < 2400);
+  if (zw.length >= 14) {
+    const zc = {};
+    let zt = 0;
+    for (const e of zw) if (e.pose) { zc[e.pose] = (zc[e.pose] || 0) + 1; zt++; }
+    if (zt >= 10 && ((zc.D || 0) + (zc.G || 0)) / zt > 0.5 && zShape(zw.map(e => e.p8))) return "Z";
+  }
+  return null;
+}
+/*MOTION-END*/
 
-      await new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js";
-        script.onload = resolve;
-        script.onerror = () => reject(new Error("Não foi possível baixar o leitor de mãos."));
-        document.head.appendChild(script);
-      });
+function pushBuf(h, pose, now) {
+  const s = Math.hypot(h[0].x - h[9].x, h[0].y - h[9].y) || 1e-3;
+  const P = (x, y) => [-x / s, y / s];               // x invertido: direita de quem faz o sinal
+  const mid = [(h[8].x + h[12].x) / 2, (h[8].y + h[12].y) / 2];
+  const base = [(h[5].x + h[9].x) / 2, (h[5].y + h[9].y) / 2];
+  buf.push({
+    t: now, pose,
+    p8: P(h[8].x, h[8].y), mid: P(mid[0], mid[1]), p20: P(h[20].x, h[20].y), w: P(h[0].x, h[0].y),
+    ang: Math.atan2(mid[1] - base[1], -(mid[0] - base[0]))
+  });
+  while (buf.length && now - buf[0].t > 2600) buf.shift();
+}
 
-      tracker = new window.Hands({
-        locateFile: file =>
-          `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-      });
+function commit(L) {
+  lockUntil = performance.now() + 2000;
+  blockedPose = BASE[L] === "V" ? null : BASE[L];
+  buf.length = 0; cand = null; count = 0;
+  shown = L; onLetter(L);
+}
 
-      tracker.setOptions({
-        maxNumHands: 2,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.30,
-        minTrackingConfidence: 0.30
-      });
+/* ---------- Resultado de cada quadro ---------- */
+function onResults(res) {
+  const hands = res.multiHandLandmarks || [];
+  draw(hands[0]);
+  const now = performance.now();
+  if (!hands.length) { lastVec = null; blockedPose = null; feed(null); return; }
 
-      tracker.onResults(result => {
-        detectedHands = result.multiHandLandmarks || [];
-      });
+  // Corrige a proporção da imagem para as distâncias ficarem certas
+  const asp = (video.videoWidth / video.videoHeight) || 1.33;
+  const h = hands[0].map(p => ({ x: p.x * asp, y: p.y, z: p.z * asp }));
+  const label = res.multiHandedness && res.multiHandedness[0] && res.multiHandedness[0].label;
+  const vec = toVector(h, label === "Right");
+  lastVec = vec;
+
+  if (recLeft > 0) {
+    (samples[recLetter] ||= []).push(vec.map(x => Math.round(x * 1000) / 1000));
+    if (samples[recLetter].length > 120) samples[recLetter].shift();
+    recLeft--;
+    $("calMsg").textContent = `Gravando ${recLetter}… ${30 - recLeft}/30`;
+    if (recLeft === 0) { save(); renderGrid(); $("calMsg").textContent = `Letra ${recLetter} gravada. Agora tente fazer o sinal.`; }
+    return;
+  }
+
+  const pose = classify(h, vec);
+  pushBuf(h, pose, now);
+  if (now < lockUntil) return;
+
+  const mv = motionLetter(buf, now);
+  if (mv) { commit(mv); return; }
+
+  // Mão se mexendo numa posição que pode virar letra com movimento: espera terminar
+  if (MOTION_BASES.has(pose) && motionEnergy(buf, now) > 0.45) { cand = null; count = 0; return; }
+
+  if (pose && blockedPose) {
+    if (pose === blockedPose) { cand = null; count = 0; return; }
+    blockedPose = null;
+  }
+  feed(pose);
+}
+
+function draw(h) {
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  if (!h || !video.videoWidth) return;
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const sc = Math.max(W / vw, H / vh), ox = (W - vw * sc) / 2, oy = (H - vh * sc) / 2;
+  const P = p => [p.x * vw * sc + ox, p.y * vh * sc + oy];
+  ctx.lineWidth = 3; ctx.lineCap = "round";
+  ctx.strokeStyle = "rgba(255,255,255,.8)";
+  for (const [a, b] of LINKS) {
+    const [x1, y1] = P(h[a]), [x2, y2] = P(h[b]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+  ctx.fillStyle = "#6f8cff";
+  for (const p of h) { const [x, y] = P(p); ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill(); }
+}
+
+/* ---------- Estabilidade ---------- */
+function feed(L) {
+  if (L === cand) count++; else { cand = L; count = 1; }
+  if (L && count >= 10 && L !== shown) { shown = L; onLetter(L); }
+  if (!L && count >= 12 && shown) { shown = null; showLetter(null); renderGrid(); }
+}
+
+function showLetter(L) {
+  $("letter").textContent = L || "·";
+  $("letterInfo").innerHTML = L
+    ? `<strong>Letra ${L}</strong>“${SAY[L]}”`
+    : `<strong>Mostre a mão</strong>para a câmera`;
+}
+
+function onLetter(L) {
+  showLetter(L);
+  sel = L; renderGrid(); renderDetail();
+  if (target) {
+    if (L === target && !locked) {
+      locked = true; score++;
+      $("hud").classList.add("ok");
+      renderScore();
+      if (voiceOn) say(`Acertou! ${SAY[L]}`);
+      setTimeout(() => { locked = false; $("hud").classList.remove("ok"); nextTarget(); }, 1600);
     }
+    return;
+  }
+  if (voiceOn) say(SAY[L]);
+}
 
-    function makeAudio() {
-      audio = new AudioContext();
-      oscillator = audio.createOscillator();
-      gain = audio.createGain();
-      panner = audio.createStereoPanner();
-      analyser = audio.createAnalyser();
+/* ---------- Alfabeto e detalhes ---------- */
+function renderGrid() {
+  const g = $("grid"); g.innerHTML = "";
+  for (const L of LETTERS) {
+    const b = document.createElement("button");
+    b.textContent = L;
+    b.setAttribute("aria-label", `Letra ${L}`);
+    b.className = [L === sel && "sel", L === shown && "live", samples[L] && samples[L].length && "cal", MOVE.has(L) && "mv"].filter(Boolean).join(" ");
+    b.onclick = () => { sel = L; say(SAY[L]); renderGrid(); renderDetail(); };
+    g.appendChild(b);
+  }
+}
 
-      analyser.fftSize = 1024;
-      oscillator.type = $("waveType").value;
-      gain.gain.value = 0;
+function renderDetail() {
+  $("dL").textContent = sel; $("dT").textContent = INFO[sel]; $("recL").textContent = BASE[sel] || sel;
+  const n = (samples[BASE[sel] || sel] || []).length;
+  $("dM").textContent = MOVE.has(sel)
+    ? `Letra com movimento. Ela começa na posição do ${BASE[sel]}.`
+    : n ? "Você já ensinou esta letra ao sistema." : "";
+}
+$("dPlay").onclick = () => say(SAY[sel]);
 
-      oscillator
-        .connect(gain)
-        .connect(panner)
-        .connect(analyser)
-        .connect(audio.destination);
+/* ---------- Treino ---------- */
+function nextTarget() {
+  const pool = LETTERS.filter(l => l !== target);
+  target = pool[Math.floor(Math.random() * pool.length)];
+  $("target").textContent = target;
+  $("targetHint").textContent = MOVE.has(target) ? "Essa tem movimento" : "";
+  shown = null; cand = null; count = 0; blockedPose = null;
+  if (voiceOn) say(`Faça a letra ${SAY[target]}`);
+}
+function renderScore() { $("score").textContent = score ? ` · ${score}` : ""; }
 
-      oscillator.start();
-      audioLoop();
-      drawWave();
-    }
+$("train").onclick = () => {
+  if (target) {
+    target = null; $("trainPill").hidden = true; $("train").textContent = "Começar";
+  } else {
+    score = 0; renderScore(); $("trainPill").hidden = false; $("train").textContent = "Parar";
+    $("drawer").classList.remove("open");
+    nextTarget();
+  }
+};
 
-    function audioLoop() {
-      for (const key of ["freq", "vol", "pan"]) {
-        current[key] += (target[key] - current[key]) * 0.14;
-      }
+/* ---------- Ensinar ao sistema ---------- */
+$("rec").onclick = () => {
+  if (!running) { $("calMsg").textContent = "Ligue a câmera primeiro."; return; }
+  const L = BASE[sel] || sel;   // letras com movimento treinam a posição base
+  $("calMsg").textContent = `Prepare o sinal da letra ${L}… gravando em 2 segundos.`;
+  setTimeout(() => {
+    if (!lastVec) { $("calMsg").textContent = "Não achei sua mão. Tente de novo com a mão visível."; return; }
+    recLetter = L; recLeft = 30;
+  }, 2000);
+};
+$("clearOne").onclick = () => { const L = BASE[sel] || sel; delete samples[L]; save(); renderGrid(); renderDetail(); $("calMsg").textContent = `Letra ${L} apagada.`; };
+$("clearAll").onclick = () => { samples = {}; save(); renderGrid(); renderDetail(); $("calMsg").textContent = "Tudo apagado."; };
 
-      oscillator.frequency.setTargetAtTime(current.freq, audio.currentTime, 0.025);
-      gain.gain.setTargetAtTime(current.vol, audio.currentTime, 0.025);
-      panner.pan.setTargetAtTime(current.pan, audio.currentTime, 0.025);
+/* ---------- Menu ---------- */
+$("menuBtn").onclick = () => $("drawer").classList.add("open");
+$("closeBtn").onclick = () => $("drawer").classList.remove("open");
+addEventListener("keydown", e => { if (e.key === "Escape") $("drawer").classList.remove("open"); });
 
-      requestAnimationFrame(audioLoop);
-    }
-
-    function drawWave() {
-      requestAnimationFrame(drawWave);
-      if (!analyser) return;
-
-      const data = new Uint8Array(analyser.fftSize);
-      analyser.getByteTimeDomainData(data);
-
-      waveCtx.clearRect(0, 0, wave.width, wave.height);
-      waveCtx.beginPath();
-
-      data.forEach((value, index) => {
-        const x = index * wave.width / data.length;
-        const y = value / 255 * wave.height;
-
-        index ? waveCtx.lineTo(x, y) : waveCtx.moveTo(x, y);
-      });
-
-      waveCtx.strokeStyle = "#74ff91";
-      waveCtx.lineWidth = 2;
-      waveCtx.stroke();
-    }
-
-    async function start() {
-      try {
-        $("start").disabled = true;
-        $("status").textContent = "SOLICITANDO CÂMERA";
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false
-        });
-
-        video.srcObject = stream;
-        await video.play();
-
-        $("cameraState").textContent = "LIVE";
-        $("lamp").classList.add("on");
-
-        if (!audio) makeAudio();
-        if (audio.state === "suspended") await audio.resume();
-
-        running = true;
-        $("start").textContent = "[ SISTEMA ATIVO ]";
-
-        await makeTracker();
-
-        $("status").textContent = "LEITOR ATIVO";
-        detect();
-
-      } catch (error) {
-        console.error(error);
-        $("status").textContent = "LEITOR OFFLINE";
-        $("start").disabled = false;
-      }
-    }
-
-    async function detect() {
-      if (!running || !tracker) return;
-
-      if (
-        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
-        !detectorBusy
-      ) {
-        try {
-          detectorBusy = true;
-
-          await tracker.send({ image: video });
-
-          draw(detectedHands);
-          processHands(detectedHands);
-
-        } catch (error) {
-          console.error(error);
-          $("status").textContent = "ERRO NO LEITOR";
-        } finally {
-          detectorBusy = false;
-        }
-      }
-
-      requestAnimationFrame(detect);
-    }
-
-    function draw(hands) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const links = [
-        [0,1],[1,2],[2,3],[3,4],
-        [0,5],[5,6],[6,7],[7,8],
-        [0,9],[9,10],[10,11],[11,12],
-        [0,13],[13,14],[14,15],[15,16],
-        [0,17],[17,18],[18,19],[19,20],
-        [5,9],[9,13],[13,17]
-      ];
-
-      hands.forEach(hand => {
-        ctx.strokeStyle = "#74ff91";
-        ctx.fillStyle = "#d8ffe0";
-
-        links.forEach(([a, b]) => {
-          ctx.beginPath();
-          ctx.moveTo(hand[a].x * canvas.width, hand[a].y * canvas.height);
-          ctx.lineTo(hand[b].x * canvas.width, hand[b].y * canvas.height);
-          ctx.stroke();
-        });
-
-        hand.forEach((point, index) => {
-          ctx.beginPath();
-          ctx.arc(
-            point.x * canvas.width,
-            point.y * canvas.height,
-            index === 8 ? 7 : 3,
-            0,
-            Math.PI * 2
-          );
-          ctx.fill();
-        });
-      });
-    }
-
-    function processHands(hands) {
-      $("handCount").textContent = `HANDS: ${hands.length}`;
-
-      if (!hands.length) {
-        target.vol = 0;
-        $("note").textContent = "";
-        $("noteInfo").textContent = "PROCURA ATIVA — APROXIME A MÃO";
-        $("status").textContent = "LEITOR ATIVO — 0 MÃOS";
-        setGesture("none");
-        return;
-      }
-
-      $("status").textContent = `LEITOR ATIVO — ${hands.length} MÃO(S)`;
-
-      const hand = hands[0];
-      const pinch = distance(hand[4], hand[8]) < 0.075;
-      const openCount = [8, 12, 16, 20]
-        .filter((tip, index) => hand[tip].y < hand[[6, 10, 14, 18][index]].y)
-        .length;
-
-      const gesture = pinch ? "pinch" : openCount <= 1 ? "closed" : "open";
-
-      const pitch = clamp(1 - hand[0].y);
-      const frequency = (130 + 750 * pitch) * 2 ** octave;
-      const pan = clamp((0.5 - hand[0].x) * 2, -1, 1);
-      const volume = gesture === "pinch" ? 0.32 : gesture === "open" ? 0.10 : 0;
-
-      target.freq = frequency;
-      target.pan = pan;
-      target.vol = muted ? 0 : volume;
-
-      const midi = Math.round(69 + 12 * Math.log2(frequency / 440));
-      const note = noteNames[(midi % 12 + 12) % 12];
-      const noteOctave = Math.floor(midi / 12) - 1;
-
-      $("note").textContent = note;
-      $("noteInfo").textContent = `${Math.round(frequency)} HZ · OITAVA ${noteOctave}`;
-      $("frequency").textContent = `${Math.round(frequency)} HZ`;
-
-      setMeter("pitch", pitch, `${Math.round(pitch * 100)}%`);
-      setMeter("volume", volume, `${Math.round(volume * 100)}%`);
-      setMeter("pan", (pan + 1) / 2, pan < -0.1 ? "ESQ" : pan > 0.1 ? "DIR" : "CENTRO");
-
-      setGesture(gesture);
-    }
-
-    function setMeter(name, value, text) {
-      $(`${name}Bar`).style.width = `${value * 100}%`;
-      $(`${name}Value`).textContent = text;
-    }
-
-    function setGesture(gesture) {
-      ["open", "pinch", "closed"].forEach(id =>
-        $(id).classList.toggle("active", id === gesture)
-      );
-
-      $("gesture").textContent =
-        gesture === "none" ? "AGUARDANDO" : gesture.toUpperCase();
-    }
-
-    $("start").onclick = start;
-
-    $("waveType").onchange = event => {
-      if (oscillator) oscillator.type = event.target.value;
-    };
-
-    $("up").onclick = () => octave = Math.min(2, octave + 1);
-    $("down").onclick = () => octave = Math.max(-2, octave - 1);
-
-    $("reset").onclick = () => {
-      octave = 0;
-      target = { freq: 440, vol: 0, pan: 0 };
-      $("note").textContent = "";
-    };
-
-    $("mute").onclick = event => {
-      muted = !muted;
-      event.target.textContent = muted ? "UNMUTE" : "MUTE";
-
-      if (muted) target.vol = 0;
-    };
-  </script>
+$("start").onclick = start;
+renderGrid(); renderDetail();
+</script>
 </body>
 </html>
